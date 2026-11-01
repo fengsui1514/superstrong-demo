@@ -1,0 +1,61 @@
+---
+import Logo from './Logo.astro';
+import { site } from '../data/site';
+import { products } from '../data/products';
+import { ui } from '../i18n/ui';
+import { defaultLocale, localePath, type Locale } from '../i18n';
+
+type Props = { lang?: Locale };
+const { lang = defaultLocale } = Astro.props;
+
+const t = ui[lang];
+const year = new Date().getFullYear();
+const description = lang === 'es' ? site.descriptionEs : site.description;
+---
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <span style="width:26px;height:25px;display:block"><Logo /></span>
+          <span style="font-family:var(--display);font-weight:700;letter-spacing:.18em;text-transform:uppercase;font-size:14px">{site.name}</span>
+        </div>
+        <p>{description}</p>
+      </div>
+      <div>
+        <h5>{t.footer.products}</h5>
+        <ul>
+          {products.map((p) => (
+            <li><a href={localePath(lang, `/products/${p.slug}/`)}>{p.model}</a></li>
+          ))}
+          <li><a href={localePath(lang, '/products/')}>{t.footer.allProducts}</a></li>
+          <li><a href={localePath(lang, '/oem-odm/')}>{t.footer.oem}</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>{t.footer.company}</h5>
+        <ul>
+          <li><a href={localePath(lang, '/#factory')}>{t.footer.factory}</a></li>
+          <li><a href={localePath(lang, '/#quality')}>{t.footer.quality}</a></li>
+          <li><a href={localePath(lang, '/#inquiry')}>{t.footer.contactLink}</a></li>
+          <li><a href={localePath(lang, '/privacy/')}>{t.footer.privacy}</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>{t.footer.contact}</h5>
+        <ul>
+          <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+          <li><a href={`tel:${site.phone.replace(/\s+/g, '')}`}>{site.phone}</a></li>
+          <li>{site.address.line1}, {site.address.country}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="fbot">
+      <span>© {year} {site.legalName}. {t.footer.rights}</span>
+      <span>{site.demoMode ? t.footer.demo : t.footer.legal}</span>
+    </div>
+
+    <div class="footer-word" aria-hidden="true">{site.name}</div>
+  </div>
+</footer>

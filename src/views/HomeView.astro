@@ -1,0 +1,248 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Logo from '../components/Logo.astro';
+import InquirySection from '../components/InquirySection.astro';
+import { site } from '../data/site';
+import { products, productFor, specValue, type ResolvedProduct } from '../data/products';
+import { home } from '../i18n/home';
+import { ui } from '../i18n/ui';
+import { defaultLocale, fmt, htmlLang, localePath, type Locale } from '../i18n';
+
+type Props = { lang?: Locale };
+const { lang = defaultLocale } = Astro.props;
+
+const t = ui[lang];
+const h = home[lang];
+const list = products.map((product) => productFor(product, lang));
+const first = list[0];
+
+const factRows = (product: ResolvedProduct) => [
+  [h.facts.model, fmt(h.factModel, { model: product.model, blade: specValue(product, 'blade') })],
+  [h.facts.motor, fmt(h.factMotor, { power: specValue(product, 'power'), voltage: specValue(product, 'voltage') })],
+  [h.facts.blade, fmt(h.factBlade, { blade: specValue(product, 'blade'), teeth: specValue(product, 'teeth') })],
+  [h.facts.speed, specValue(product, 'speed')],
+  [h.facts.depth, fmt(h.factDepth, { depth: specValue(product, 'depth-90') })],
+  [h.facts.weight, specValue(product, 'weight')],
+];
+
+const splitStat = (value: string) => {
+  const match = value.match(/^([\d.,]+)(.*)$/);
+  return match ? [match[1], match[2]] : [value, ''];
+};
+
+const base = Astro.site ?? new URL(site.url);
+
+const itemListLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: h.itemListName,
+  inLanguage: htmlLang[lang],
+  itemListElement: list.map((product, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: product.name,
+    url: new URL(localePath(lang, `/products/${product.slug}/`), base).href,
+  })),
+};
+---
+<BaseLayout
+  title={`${h.metaTitle} | ${site.name}`}
+  description={lang === 'es' ? site.descriptionEs : site.description}
+  bodyClass="home"
+  lang={lang}
+  quoteHref="#inquiry"
+  preloadImage="/media/cs115-poster.jpg"
+  jsonLd={[itemListLd]}
+>
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <video src="/media/cs115.mp4" poster="/media/cs115-poster.jpg" muted loop playsinline preload="auto"></video>
+    <div class="counter" id="counter"><b id="count">0</b><span>%</span></div>
+    <button class="skip" id="skip" type="button">{h.preloaderSkip}</button>
+  </div>
+
+  <div class="floating-logo" id="logo" aria-hidden="true">
+    <Logo />
+  </div>
+
+  <div class="experience" id="experience" data-model={first.slug}>
+    <section class="hero" id="top">
+      <div class="shade" aria-hidden="true"></div>
+
+      <aside class="model-list" id="model-list" aria-label={h.modelsLabel}>
+        {list.map((product, index) => (
+          <button
+            class:list={['model-item', { active: index === 0 }]}
+            data-key={product.slug}
+            data-name={product.model}
+            data-no={`[0${index + 1}]`}
+            data-href={localePath(lang, `/products/${product.slug}/`)}
+            data-next={list[(index + 1) % list.length].model}
+            type="button"
+          >
+            {product.model}
+          </button>
+        ))}
+        <button class="model-item soon" type="button" aria-disabled="true">
+          {h.moreModels}<span class="soon-tag">{h.soon}</span>
+        </button>
+      </aside>
+
+      <div class="portal-wrap" id="portal-wrap">
+        <div class="portal-heading">
+          <span>{h.nowViewing}</span>
+          <span><span id="now-no">[01]</span> <strong id="now-name">{first.model}</strong></span>
+        </div>
+        <button
+          class="portal"
+          id="portal"
+          type="button"
+          aria-label={`${h.switchTo} ${list[1].model}`}
+          data-cursor={t.cursor.switch}
+          data-switch-label={h.switchTo}
+        >
+          {list.map((product, index) => (
+            <video
+              class:list={['portal-video', { 'is-on': index === 0 }]}
+              data-key={product.slug}
+              src={product.video}
+              poster={product.poster}
+              muted
+              loop
+              playsinline
+              autoplay={index === 0}
+              preload={index === 0 ? 'auto' : 'metadata'}
+              aria-hidden="true"
+            ></video>
+          ))}
+          <span class="hint">{h.tapToSwitch}</span>
+        </button>
+      </div>
+
+      <div class="hero-content">
+        <h1 id="hero-title">{first.model}</h1>
+        <div class="hero-side">
+          <dl class="hero-facts" id="hero-facts" aria-live="polite">
+            {factRows(first).map(([label, value]) => (
+              <div class="fact"><dt>{label}</dt><dd>{value}</dd></div>
+            ))}
+          </dl>
+          <div class="hero-links">
+            <a id="hero-spec-link" href={localePath(lang, `/products/${first.slug}/`)}>
+              {h.fullSpecs} <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <p class="vh">{h.vhIntro}</p>
+
+      {site.demoMode && <div class="demoflag">{h.demoflag}</div>}
+
+      {list.map((product) => (
+        <template data-facts={product.slug}>
+          {factRows(product).map(([label, value]) => (
+            <div class="fact"><dt>{label}</dt><dd>{value}</dd></div>
+          ))}
+        </template>
+      ))}
+    </section>
+
+    <section class="section" id="factory">
+      <div class="wrap">
+        <div class="head">
+          <div class="r">
+            <div class="mono">{h.factory.eyebrow}</div>
+            <h2>{h.factory.title1}<br>{h.factory.title2}</h2>
+          </div>
+          <p class="r" style="--d:.1s">{h.factory.copy}</p>
+        </div>
+
+        <div class="stats">
+          {site.stats.map((stat, index) => {
+            const value = lang === 'es' && 'valueEs' in stat ? stat.valueEs : stat.value;
+            const label = lang === 'es' && 'labelEs' in stat ? stat.labelEs : stat.label;
+            const [number, suffix] = splitStat(value);
+            return (
+              <div class="r" style={`--d:${index * 0.08}s`}>
+                <b>{number}<i>{suffix}</i></b>
+                <span>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div class="cert-row r" style="--d:.1s">
+          <span class="mono">{h.factory.certified}</span>
+          {site.certifications.map((cert) => <span class="chip">{cert}</span>)}
+        </div>
+
+        <div class="steps" id="quality">
+          {h.factory.steps.map((step, index) => (
+            <div class="step r" style={`--d:${index * 0.08}s`}>
+              <em>{String(index + 1).padStart(2, '0')}</em>
+              <div><h4>{step.title}</h4><p>{step.text}</p></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="lineup">
+      <div class="wrap">
+        <div class="head">
+          <div class="r">
+            <div class="mono">{h.lineup.eyebrow}</div>
+            <h2>{h.lineup.title1}<br>{h.lineup.title2}</h2>
+          </div>
+          <p class="r" style="--d:.1s">{h.lineup.copy}</p>
+        </div>
+
+        <div class="cards">
+          {list.map((product, index) => (
+            <a
+              class="card r"
+              style={`--d:${index * 0.1}s`}
+              href={localePath(lang, `/products/${product.slug}/`)}
+              data-cursor={t.cursor.view}
+            >
+              <div class="ph">
+                <span class="modelno">{product.model}</span>
+                {product.badge && <span class="badge">{product.badge}</span>}
+                <img src={product.image} alt={product.imageAlt} width="1254" height="1254" loading="lazy">
+              </div>
+              <div class="body">
+                <h3>{product.name}</h3>
+                <p class="card-summary">{product.summary}</p>
+                <div class="sp">
+                  {product.highlights.slice(0, 3).map((highlight) => (
+                    <span><b>{highlight.value}</b> {highlight.label.toLowerCase()}</span>
+                  ))}
+                </div>
+                <span class="card-link">{t.product.viewSpecs} <span aria-hidden="true">→</span></span>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <div class="r" style="margin-top:26px;--d:.15s">
+          <a class="btn" href={localePath(lang, '/products/')} data-cursor={t.cursor.view}>{h.lineup.allProducts}</a>
+        </div>
+      </div>
+    </section>
+
+    <InquirySection
+      lang={lang}
+      eyebrow={h.inquiry.eyebrow}
+      title={h.inquiry.title}
+      note={h.inquiry.note}
+    />
+  </div>
+
+  <div class="custom-cursor" id="cursor" aria-hidden="true">
+    <span class="cursor-orbit"></span><span class="cursor-dot"></span><span class="cursor-label" id="cursor-label">{t.cursor.view}</span>
+  </div>
+
+  <script>
+    import '../scripts/home';
+  </script>
+</BaseLayout>

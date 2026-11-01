@@ -1,0 +1,74 @@
+---
+import Logo from './Logo.astro';
+import { site } from '../data/site';
+import { ui } from '../i18n/ui';
+import { defaultLocale, localePath, stripLocale, type Locale } from '../i18n';
+
+type Props = { quoteHref?: string; lang?: Locale };
+const { quoteHref = '/#inquiry', lang = defaultLocale } = Astro.props;
+
+const t = ui[lang];
+const basePath = stripLocale(lang, Astro.url.pathname);
+const enHref = localePath('en', basePath);
+const esHref = localePath('es', basePath);
+---
+<header class="header" id="site-header">
+  <a class="brand" href={localePath(lang, '/')} aria-label={`${site.name} — ${t.home}`}>
+    <span class="brand-mark"><Logo /></span>
+    <span class="brandtext">{site.name}</span>
+  </a>
+
+  <div class="header-actions">
+    <nav class="nav" aria-label={t.navPrimary}>
+      {site.nav.map((item) => (
+        <a
+          href={localePath(lang, item.href)}
+          hreflang={lang}
+          data-cursor={t.cursor.view}
+        >{lang === 'es' ? item.labelEs : item.label}</a>
+      ))}
+    </nav>
+
+    <div class="lang-switch" role="group" aria-label={t.language}>
+      <a href={enHref} hreflang="en" lang="en" aria-current={lang === 'en' ? 'true' : undefined}>EN</a>
+      <a href={esHref} hreflang="es" lang="es" aria-current={lang === 'es' ? 'true' : undefined}>ES</a>
+    </div>
+
+    <a class="menu" href={quoteHref} data-cursor={t.cursor.ask}>{t.quote}</a>
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-label={t.menuOpen}
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      data-menu-toggle
+      data-label-open={t.menuOpen}
+      data-label-close={t.menuClose}
+    >
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+  <nav aria-label={t.navMobile}>
+    {site.nav.map((item, i) => (
+      <a href={localePath(lang, item.href)} data-menu-link>
+        <em>{String(i + 1).padStart(2, '0')}</em>{lang === 'es' ? item.labelEs : item.label}
+      </a>
+    ))}
+  </nav>
+  <div class="mobile-menu-foot">
+    <a class="btn btn-primary" href={quoteHref} data-menu-link>{t.quote}</a>
+    <div class="mobile-lang" role="group" aria-label={t.language}>
+      <a href={enHref} hreflang="en" lang="en" aria-current={lang === 'en' ? 'true' : undefined} data-menu-link>English</a>
+      <a href={esHref} hreflang="es" lang="es" aria-current={lang === 'es' ? 'true' : undefined} data-menu-link>Español</a>
+    </div>
+    <div>
+      <a href={`mailto:${site.email}`}>{site.email}</a>
+      <span> · </span>
+      <a href={`tel:${site.phone.replace(/\s+/g, '')}`}>{site.phone}</a>
+    </div>
+    <div>{site.address.line1}, {site.address.country}</div>
+  </div>
+</div>

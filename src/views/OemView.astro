@@ -1,0 +1,161 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import InquirySection from '../components/InquirySection.astro';
+import { site } from '../data/site';
+import { oem } from '../i18n/oem';
+import { ui } from '../i18n/ui';
+import { defaultLocale, htmlLang, localePath, type Locale } from '../i18n';
+
+type Props = { lang?: Locale };
+const { lang = defaultLocale } = Astro.props;
+
+const t = ui[lang];
+const o = oem[lang];
+const base = Astro.site ?? new URL(site.url);
+const pageUrl = new URL(localePath(lang, '/oem-odm/'), base).href;
+
+const breadcrumbItems = [
+  { label: t.home, href: localePath(lang, '/') },
+  { label: o.breadcrumb },
+];
+
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  inLanguage: htmlLang[lang],
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: t.home, item: new URL(localePath(lang, '/'), base).href },
+    { '@type': 'ListItem', position: 2, name: o.breadcrumb, item: pageUrl },
+  ],
+};
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  inLanguage: htmlLang[lang],
+  mainEntity: o.faq.items.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: { '@type': 'Answer', text: faq.a },
+  })),
+};
+---
+<BaseLayout
+  title={`${o.metaTitle} | ${site.name}`}
+  description={o.metaDescription}
+  bodyClass="oem-page"
+  lang={lang}
+  quoteHref="#inquiry"
+  jsonLd={[breadcrumbLd, faqLd]}
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <Breadcrumbs label={t.breadcrumbLabel} items={breadcrumbItems} />
+      <div class="mono">{o.eyebrow}</div>
+      <h1>{o.title1}<br>{o.title2}</h1>
+      <p class="lede">{o.lede}</p>
+      <p class="vh">{o.vh}</p>
+      <div class="product-actions" style="margin-top:30px">
+        <a class="btn btn-primary" href="#inquiry">{o.ctaPrimary}</a>
+        <a class="btn" href={localePath(lang, '/products/')}>{o.ctaSecondary}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap detail-grid">
+      <div class="sticky r">
+        <div class="mono">{o.custom.eyebrow}</div>
+        <h2>{o.custom.title1}<br>{o.custom.title2}</h2>
+        <div class="detail-copy" style="margin-top:22px">
+          <p>{o.custom.copy1}</p>
+          <p>{o.custom.copy2}</p>
+        </div>
+      </div>
+
+      <div class="r" style="--d:.1s">
+        <ul class="feature-list">
+          {o.custom.items.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="head">
+        <div class="r">
+          <div class="mono">{o.process.eyebrow}</div>
+          <h2>{o.process.title1}<br>{o.process.title2}</h2>
+        </div>
+        <p class="r" style="--d:.1s">{o.process.copy}</p>
+      </div>
+
+      <div class="steps">
+        {o.process.steps.map((step, index) => (
+          <div class="step r" style={`--d:${index * 0.08}s`}>
+            <em>{String(index + 1).padStart(2, '0')}</em>
+            <div>
+              <h4>{step.title}</h4>
+              <p>{step.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap detail-grid">
+      <div class="sticky r">
+        <div class="mono">{o.inputs.eyebrow}</div>
+        <h2>{o.inputs.title1}<br>{o.inputs.title2}</h2>
+        <div class="detail-copy" style="margin-top:22px">
+          <p>{o.inputs.copy}</p>
+        </div>
+      </div>
+
+      <div class="r" style="--d:.1s">
+        <table class="spec-table">
+          <tbody>
+            {o.inputs.rows.map(([label, value]) => (
+              <tr><th scope="row">{label}</th><td>{value}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap detail-grid">
+      <div class="sticky r">
+        <div class="mono">{o.faq.eyebrow}</div>
+        <h2>{o.faq.title1}<br>{o.faq.title2}</h2>
+        <div class="detail-copy" style="margin-top:22px">
+          <p>{o.faq.copy}</p>
+          <p><a href="#inquiry" style="color:var(--acid)">{o.faq.link}</a></p>
+        </div>
+      </div>
+      <div class="r" style="--d:.1s">
+        <div class="faq-list">
+          {o.faq.items.map((faq) => (
+            <details class="faq">
+              <summary>{faq.q}</summary>
+              <p>{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <InquirySection
+    lang={lang}
+    eyebrow={o.inquiry.eyebrow}
+    title={o.inquiry.title}
+    note={o.inquiry.note}
+    defaultModel="OEM / ODM"
+  />
+</BaseLayout>

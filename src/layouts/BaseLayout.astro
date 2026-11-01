@@ -1,0 +1,160 @@
+---
+import '@fontsource-variable/archivo/wght.css';
+import '@fontsource-variable/inter/wght.css';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CookieConsent from '../components/CookieConsent.astro';
+import WhatsAppFloat from '../components/WhatsAppFloat.astro';
+import { site } from '../data/site';
+import { ui } from '../i18n/ui';
+import {
+  defaultLocale,
+  htmlLang,
+  ogLocale,
+  stripLocale,
+  localePath,
+  type Locale,
+} from '../i18n';
+
+type Props = {
+  title: string;
+  description?: string;
+  image?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  preloadImage?: string;
+  ogType?: 'website' | 'article' | 'product';
+  noindex?: boolean;
+  bodyClass?: string;
+  quoteHref?: string;
+  lang?: Locale;
+  jsonLd?: Record<string, unknown>[];
+};
+
+const {
+  title,
+  description,
+  image = '/media/og.jpg',
+  imageWidth = 1200,
+  imageHeight = 630,
+  preloadImage,
+  ogType = 'website',
+  noindex = false,
+  bodyClass = '',
+  quoteHref: quoteHrefProp,
+  lang = defaultLocale,
+  jsonLd = [],
+} = Astro.props;
+
+const quoteHref = quoteHrefProp ?? localePath(lang, '/#inquiry');
+const t = ui[lang];
+const siteDescription = lang === 'es' ? site.descriptionEs : site.description;
+const metaDescription = description ?? siteDescription;
+
+const base = Astro.site ?? new URL(site.url);
+const canonical = new URL(Astro.url.pathname, base).href;
+const ogImage = new URL(image, base).href;
+const robots = noindex || site.demoMode ? 'noindex, nofollow' : 'index, follow';
+
+const basePath = stripLocale(lang, Astro.url.pathname);
+const alternates = [
+  { hreflang: 'en', href: new URL(localePath('en', basePath), base).href },
+  { hreflang: 'es', href: new URL(localePath('es', basePath), base).href },
+  { hreflang: 'x-default', href: new URL(localePath('en', basePath), base).href },
+];
+
+const organizationLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': new URL('/#organization', base).href,
+  name: site.legalName,
+  alternateName: site.name,
+  url: new URL('/', base).href,
+  logo: new URL('/favicon.svg', base).href,
+  description: siteDescription,
+  foundingDate: String(site.founded),
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Ningbo',
+    addressRegion: 'Zhejiang',
+    addressCountry: 'CN',
+  },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'sales',
+    email: site.email,
+    telephone: site.phone,
+    availableLanguage: ['en', 'es'],
+  },
+};
+
+const websiteLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: site.name,
+  url: new URL('/', base).href,
+  inLanguage: htmlLang[lang],
+  publisher: { '@id': new URL('/#organization', base).href },
+};
+
+const blocks = [organizationLd, websiteLd, ...jsonLd];
+---
+<!doctype html>
+<html lang={htmlLang[lang]} class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#090807">
+  <title>{title}</title>
+  <meta name="description" content={metaDescription}>
+  <meta name="robots" content={robots}>
+  <link rel="canonical" href={canonical}>
+  {alternates.map((alt) => <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />)}
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  {preloadImage && <link rel="preload" as="image" href={preloadImage}>}
+
+  <meta property="og:site_name" content={site.name}>
+  <meta property="og:type" content={ogType}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:url" content={canonical}>
+  <meta property="og:image" content={ogImage}>
+  <meta property="og:image:width" content={String(imageWidth)}>
+  <meta property="og:image:height" content={String(imageHeight)}>
+  <meta property="og:locale" content={ogLocale[lang]}>
+  <meta property="og:locale:alternate" content={ogLocale[lang === 'en' ? 'es' : 'en']}>
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content={title}>
+  <meta name="twitter:description" content={description}>
+  <meta name="twitter:image" content={ogImage}>
+
+  <script is:inline>
+    document.documentElement.classList.remove('no-js');
+    document.documentElement.classList.add('js');
+    try {
+      if (sessionStorage.getItem('ss-intro') === '1') {
+        document.documentElement.classList.add('intro-skip');
+      }
+    } catch (e) {}
+  </script>
+
+  {blocks.map((block) => (
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(block)}></script>
+  ))}
+</head>
+<body class={bodyClass}>
+  <a class="skip-link" href="#main">{t.skip}</a>
+  <Header quoteHref={quoteHref} lang={lang} />
+  <main id="main">
+    <slot />
+  </main>
+  <Footer lang={lang} />
+  <CookieConsent lang={lang} />
+  <WhatsAppFloat lang={lang} />
+  <script>
+    import '../scripts/ui';
+  </script>
+</body>
+</html>

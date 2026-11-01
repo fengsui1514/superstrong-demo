@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { site } from '../data/site';
+import { privacy } from '../i18n/privacy';
+import { ui } from '../i18n/ui';
+import { defaultLocale, fmt, htmlLang, localePath, type Locale } from '../i18n';
+
+type Props = { lang?: Locale };
+const { lang = defaultLocale } = Astro.props;
+
+const t = ui[lang];
+const p = privacy[lang];
+const base = Astro.site ?? new URL(site.url);
+const pageUrl = new URL(localePath(lang, '/privacy/'), base).href;
+
+const vars = {
+  legalName: site.legalName,
+  location: `${site.address.line1}, ${site.address.country}`,
+  email: site.email,
+};
+
+const breadcrumbItems = [
+  { label: t.home, href: localePath(lang, '/') },
+  { label: p.breadcrumb },
+];
+
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  inLanguage: htmlLang[lang],
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: t.home, item: new URL(localePath(lang, '/'), base).href },
+    { '@type': 'ListItem', position: 2, name: p.breadcrumb, item: pageUrl },
+  ],
+};
+---
+<BaseLayout
+  title={`${p.metaTitle} — ${site.name}`}
+  description={fmt(p.metaDescription, vars)}
+  bodyClass="privacy-page"
+  lang={lang}
+  jsonLd={[breadcrumbLd]}
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <Breadcrumbs label={t.breadcrumbLabel} items={breadcrumbItems} />
+      <div class="mono">{p.eyebrow}</div>
+      <h1>{p.title}</h1>
+      <p class="lede">{fmt(p.lede, vars)}</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <article class="prose" set:html={fmt(p.body, vars)}></article>
+    </div>
+  </section>
+</BaseLayout>

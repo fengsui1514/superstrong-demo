@@ -1,0 +1,121 @@
+---
+import { site } from '../data/site';
+import { products } from '../data/products';
+import { ui } from '../i18n/ui';
+import { defaultLocale, fmt, localePath, type Locale } from '../i18n';
+
+type Props = {
+  id?: string;
+  eyebrow?: string;
+  title?: string;
+  note?: string;
+  defaultModel?: string;
+  lang?: Locale;
+};
+
+const {
+  id = 'inquiry',
+  eyebrow = '(03) Inquiry',
+  title = 'Get a factory-direct quote.',
+  note = 'Tell us your model, market and volume. Our export team replies within one business day. Sample orders and OEM programs are welcome.',
+  defaultModel = '',
+  lang = defaultLocale,
+} = Astro.props;
+
+const t = ui[lang];
+const waDigits = site.whatsapp.replace(/[^\d]/g, '');
+const canSubmit = Boolean(site.formEndpoint) && !site.demoMode;
+const privacyHref = localePath(lang, '/privacy/');
+---
+<section class="section inquiry" id={id}>
+  <div class="wrap grid">
+    <div class="r">
+      <div class="mono" style="color:var(--acid)">{eyebrow}</div>
+      <h2>{title}</h2>
+      <p class="note">{note}</p>
+      <div class="wapp">
+        <i aria-hidden="true">✆</i>
+        {waDigits ? (
+          <span>
+            {t.inquiry.whatsappQuestion}{' '}
+            <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noopener">{t.inquiry.whatsappLink}</a>
+          </span>
+        ) : (
+          <span>
+            {t.inquiry.emailQuestion} <a href={`mailto:${site.email}`}>{site.email}</a>
+          </span>
+        )}
+      </div>
+    </div>
+
+    <form
+      class="r"
+      style="--d:.1s"
+      data-inquiry
+      data-demo={site.demoMode ? 'true' : 'false'}
+      data-endpoint={site.formEndpoint}
+      data-email={site.email}
+      data-msg-demo={fmt(t.inquiry.demoMsg, { email: site.email })}
+      data-msg-sending={t.inquiry.sending}
+      data-msg-success={t.inquiry.successMsg}
+      data-msg-error={fmt(t.inquiry.errorMsg, { email: site.email })}
+      data-send-label={t.inquiry.send}
+      action={canSubmit ? site.formEndpoint : undefined}
+      method="post"
+    >
+      <div>
+        <label for={`name-${id}`}>{t.inquiry.name} *</label>
+        <input id={`name-${id}`} name="name" autocomplete="name" required placeholder={t.inquiry.namePh}>
+      </div>
+      <div>
+        <label for={`email-${id}`}>{t.inquiry.email} *</label>
+        <input id={`email-${id}`} name="email" type="email" autocomplete="email" required placeholder={t.inquiry.emailPh}>
+      </div>
+      <div>
+        <label for={`company-${id}`}>{t.inquiry.company}</label>
+        <input id={`company-${id}`} name="company" autocomplete="organization" placeholder={t.inquiry.companyPh}>
+      </div>
+      <div>
+        <label for={`country-${id}`}>{t.inquiry.country}</label>
+        <input id={`country-${id}`} name="country" autocomplete="country-name" placeholder={t.inquiry.countryPh}>
+      </div>
+      <div>
+        <label for={`model-${id}`}>{t.inquiry.model}</label>
+        <select id={`model-${id}`} name="model">
+          <option value="">{t.inquiry.anyModel}</option>
+          {products.map((p) => (
+            <option value={p.model} selected={p.model === defaultModel}>{p.model}</option>
+          ))}
+          <option value="OEM / ODM" selected={defaultModel === 'OEM / ODM'}>{t.inquiry.oemProgram}</option>
+          <option value="Other" selected={defaultModel === 'Other'}>{t.inquiry.other}</option>
+        </select>
+      </div>
+      <div>
+        <label for={`qty-${id}`}>{t.inquiry.qty}</label>
+        <input id={`qty-${id}`} name="quantity" inputmode="numeric" placeholder={t.inquiry.qtyPh}>
+      </div>
+      <div class="full">
+        <label for={`message-${id}`}>{t.inquiry.message} *</label>
+        <textarea id={`message-${id}`} name="message" required placeholder={t.inquiry.messagePh}></textarea>
+      </div>
+      <div class="hp" aria-hidden="true">
+        <label for={`website-${id}`}>Website</label>
+        <input id={`website-${id}`} name="website" tabindex="-1" autocomplete="off">
+      </div>
+      <div class="full">
+        <label class="check" for={`consent-${id}`}>
+          <input id={`consent-${id}`} name="consent" type="checkbox" value="yes" required>
+          <span>
+            {t.inquiry.consentBefore} {site.legalName} {t.inquiry.consentAfter}
+            <a href={privacyHref}>{t.inquiry.privacy}</a>. *
+          </span>
+        </label>
+      </div>
+      <button class="submit" type="submit">{t.inquiry.send}</button>
+      <div class="form-status" role="status" aria-live="polite"></div>
+      <div class="formnote">
+        {canSubmit ? t.inquiry.noteLive : t.inquiry.noteDemo}
+      </div>
+    </form>
+  </div>
+</section>

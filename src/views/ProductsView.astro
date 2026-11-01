@@ -1,0 +1,133 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import InquirySection from '../components/InquirySection.astro';
+import { site } from '../data/site';
+import { categories, products, productFor, categoryFor } from '../data/products';
+import { catalog } from '../i18n/catalog';
+import { ui } from '../i18n/ui';
+import { defaultLocale, fmt, htmlLang, localePath, type Locale } from '../i18n';
+
+type Props = { lang?: Locale };
+const { lang = defaultLocale } = Astro.props;
+
+const t = ui[lang];
+const l = catalog[lang].listing;
+const base = Astro.site ?? new URL(site.url);
+const productHref = (slug: string) => localePath(lang, `/products/${slug}/`);
+const list = products.map((product) => productFor(product, lang));
+
+const pageUrl = new URL(localePath(lang, '/products/'), base).href;
+
+const itemListLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: l.itemListName,
+  inLanguage: htmlLang[lang],
+  itemListElement: list.map((product, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: product.name,
+    url: new URL(productHref(product.slug), base).href,
+  })),
+};
+
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: t.home, item: new URL(localePath(lang, '/'), base).href },
+    { '@type': 'ListItem', position: 2, name: t.products, item: pageUrl },
+  ],
+};
+---
+<BaseLayout
+  title={`${l.metaTitle} | ${site.name}`}
+  description={l.metaDescription}
+  bodyClass="products-page"
+  lang={lang}
+  quoteHref="#inquiry"
+  jsonLd={[itemListLd, breadcrumbLd]}
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <Breadcrumbs
+        label={t.breadcrumbLabel}
+        items={[{ label: t.home, href: localePath(lang, '/') }, { label: t.products }]}
+      />
+      <div class="mono">{l.eyebrow}</div>
+      <h1>{l.title1}<br>{l.title2}</h1>
+      <p class="lede">{l.lede}</p>
+    </div>
+  </section>
+
+  {categories.map((rawCategory) => {
+    const category = categoryFor(rawCategory, lang);
+    const items = products
+      .filter((product) => product.category === category.slug)
+      .map((product) => productFor(product, lang));
+    return (
+      <section class="section" id={category.slug}>
+        <div class="wrap">
+          <div class="cat-head">
+            <div class="r">
+              <div class="mono">
+                {category.comingSoon ? l.inDevelopment : fmt(l.models, { count: String(items.length).padStart(2, '0') })}
+              </div>
+              <h2>{category.name}</h2>
+              <p>{category.description}</p>
+            </div>
+            {!category.comingSoon && (
+              <a class="btn r" style="--d:.1s" href="#inquiry">{l.requestPricing}</a>
+            )}
+          </div>
+
+          {category.comingSoon ? (
+            <div class="soon-panel r">
+              <div>
+                <div class="mono" style="color:var(--acid)">OEM / ODM</div>
+                <h2>{l.soonTitle1}<br>{l.soonTitle2}</h2>
+                <p>{l.soonCopy}</p>
+              </div>
+              <a class="btn btn-primary" href="#inquiry">{l.soonCta}</a>
+            </div>
+          ) : (
+            <div class="cards">
+              {items.map((product, index) => (
+                <a
+                  class="card r"
+                  style={`--d:${index * 0.1}s`}
+                  href={productHref(product.slug)}
+                  data-cursor={t.cursor.view}
+                >
+                  <div class="ph">
+                    <span class="modelno">{product.model}</span>
+                    {product.badge && <span class="badge">{product.badge}</span>}
+                    <img src={product.image} alt={product.imageAlt} width="1254" height="1254" loading="lazy">
+                  </div>
+                  <div class="body">
+                    <h3>{product.name}</h3>
+                    <p class="card-summary">{product.summary}</p>
+                    <div class="sp">
+                      {product.highlights.map((highlight) => (
+                        <span><b>{highlight.value}</b> {highlight.label.toLowerCase()}</span>
+                      ))}
+                    </div>
+                    <span class="card-link">{t.product.viewSpecs} <span aria-hidden="true">→</span></span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  })}
+
+  <InquirySection
+    lang={lang}
+    eyebrow={l.inquiryEyebrow}
+    title={l.inquiryTitle}
+    note={l.inquiryNote}
+  />
+</BaseLayout>

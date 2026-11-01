@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
+import { ui } from '../i18n/ui';
+import { defaultLocale, localePath, type Locale } from '../i18n';
+
+type Props = { lang?: Locale };
+const { lang = defaultLocale } = Astro.props;
+
+const t = ui[lang];
+const nf = t.notFound;
+---
+<BaseLayout
+  title={`${nf.eyebrow} — ${site.name}`}
+  description={nf.body}
+  noindex
+  bodyClass="notfound-page"
+  lang={lang}
+>
+  <section class="notfound">
+    <div class="wrap">
+      <div class="mono">{nf.eyebrow}</div>
+      <h1>{nf.title}</h1>
+      <p>{nf.body}</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href={localePath(lang, '/products/')}>{nf.products}</a>
+        <a class="btn" href={localePath(lang, '/#inquiry')}>{nf.contact}</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,286 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import InquirySection from '../components/InquirySection.astro';
+import { site } from '../data/site';
+import {
+  categories,
+  getRelated,
+  productFor,
+  specValue,
+  categoryFor,
+  type Product,
+} from '../data/products';
+import { catalog } from '../i18n/catalog';
+import { ui } from '../i18n/ui';
+import { defaultLocale, fmt, htmlLang, localePath, type Locale } from '../i18n';
+
+type Props = { product: Product; lang?: Locale };
+const { product, lang = defaultLocale } = Astro.props;
+
+const t = ui[lang];
+const d = catalog[lang].detail;
+const p = productFor(product, lang);
+const rawCategory = categories.find((item) => item.slug === p.category);
+const category = rawCategory ? categoryFor(rawCategory, lang) : undefined;
+const related = getRelated(p.slug).map((item) => productFor(item, lang));
+
+const base = Astro.site ?? new URL(site.url);
+const productHref = (slug: string) => localePath(lang, `/products/${slug}/`);
+const pageUrl = new URL(productHref(p.slug), base).href;
+const imageUrl = new URL(p.image, base).href;
+
+const blade = specValue(p, 'blade');
+const subtitle = fmt(d.subtitle, { blade });
+const certs = specValue(p, 'certification')
+  .split('/')
+  .map((cert) => cert.trim())
+  .filter(Boolean);
+
+const breadcrumbItems = [
+  { label: t.home, href: localePath(lang, '/') },
+  { label: t.products, href: localePath(lang, '/products/') },
+  { label: p.name },
+];
+
+const productLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: p.name,
+  sku: p.model,
+  mpn: p.model,
+  description: p.seoDescription,
+  image: [imageUrl],
+  url: pageUrl,
+  category: category?.name ?? 'Power tools',
+  inLanguage: htmlLang[lang],
+  brand: { '@type': 'Brand', name: site.name },
+  additionalProperty: p.specs.map((spec) => ({
+    '@type': 'PropertyValue',
+    name: spec.label,
+    value: spec.value,
+  })),
+};
+
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: t.home, item: new URL(localePath(lang, '/'), base).href },
+    { '@type': 'ListItem', position: 2, name: t.products, item: new URL(localePath(lang, '/products/'), base).href },
+    { '@type': 'ListItem', position: 3, name: p.name, item: pageUrl },
+  ],
+};
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  inLanguage: htmlLang[lang],
+  mainEntity: p.faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: { '@type': 'Answer', text: faq.a },
+  })),
+};
+---
+<BaseLayout
+  title={p.seoTitle}
+  description={p.seoDescription}
+  image={p.image}
+  imageWidth={1254}
+  imageHeight={1254}
+  preloadImage={p.image}
+  ogType="product"
+  bodyClass="product-page"
+  lang={lang}
+  quoteHref="#inquiry"
+  jsonLd={[productLd, breadcrumbLd, faqLd]}
+>
+  <section class="product-hero">
+    <div class="wrap">
+      <Breadcrumbs label={t.breadcrumbLabel} items={breadcrumbItems} />
+
+      <div class="product-grid">
+        <div class="media-frame r">
+          <span class="modelno">{p.model}</span>
+          {p.badge && <span class="badge">{p.badge}</span>}
+          <img src={p.image} alt={p.imageAlt} width="1254" height="1254" loading="eager" fetchpriority="high">
+          {site.demoMode && <span class="media-note">{t.product.demoMedia}</span>}
+        </div>
+
+        <div class="r" style="--d:.1s">
+          <div class="mono">{category?.name} · {p.badge ?? t.product.oemReady}</div>
+          <h1 class="product-title">
+            <strong>{p.model}</strong>
+            <span>{subtitle}</span>
+          </h1>
+          <p class="product-summary">{p.summary}</p>
+
+          <div class="highlights">
+            {p.highlights.map((highlight) => (
+              <div class="highlight">
+                <span>{highlight.label}</span>
+                <b>{highlight.value}</b>
+              </div>
+            ))}
+          </div>
+
+          <div class="product-actions">
+            <a class="btn btn-primary" href="#inquiry">{t.product.requestQuote}</a>
+            <a class="btn" href={localePath(lang, '/products/')}>{t.product.allProducts}</a>
+          </div>
+
+          <div class="product-meta">
+            {certs.map((cert) => <span class="chip">{cert}</span>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap detail-grid">
+      <div class="sticky r">
+        <div class="mono">{d.overviewEyebrow}</div>
+        <h2>{d.overviewTitle1}<br>{d.overviewTitle2}</h2>
+        <div class="detail-copy" style="margin-top:22px">
+          <p>{p.description}</p>
+          <p>{d.overviewCopy}</p>
+        </div>
+      </div>
+
+      <div class="r" style="--d:.1s">
+        <table class="spec-table">
+          <tbody>
+            {p.specs.map((spec) => (
+              <tr><th scope="row">{spec.label}</th><td>{spec.value}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap detail-grid">
+      <div class="r">
+        <div class="mono">{d.shippingEyebrow}</div>
+        <h2>{d.shippingTitle1}<br>{d.shippingTitle2}</h2>
+        <ul class="feature-list" style="margin-top:28px">
+          {p.features.map((feature) => <li>{feature}</li>)}
+        </ul>
+      </div>
+
+      <div class="r" style="--d:.1s">
+        <div class="mono">{d.applicationsEyebrow}</div>
+        <h2 style="font-size:clamp(28px,3.2vw,44px);margin-top:14px">{d.applicationsTitle1}<br>{d.applicationsTitle2}</h2>
+        <div class="app-chips" style="margin-top:22px">
+          {p.applications.map((application) => <span class="chip">{application}</span>)}
+        </div>
+        <div class="detail-copy" style="margin-top:34px">
+          <p>{fmt(d.applicationsCopy, { site: site.name })}</p>
+          <p><a href={localePath(lang, '/oem-odm/')} style="color:var(--acid)">{d.applicationsLink}</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {p.video && (
+    <section class="section">
+      <div class="wrap video-grid">
+        <div class="video-block r">
+          <video
+            src={p.video}
+            poster={p.poster}
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            controls
+            data-auto-video
+            aria-label={fmt(d.videoAria, { name: p.name })}
+          ></video>
+        </div>
+        <div class="video-copy r" style="--d:.1s">
+          <div class="mono">{d.videoEyebrow}</div>
+          <h2>{d.videoTitle1}<br>{d.videoTitle2}</h2>
+          <p>{d.videoCopy}</p>
+          <ul>
+            {d.videoBullets.map((bullet) => <li>{bullet}</li>)}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {related.length > 0 && (
+    <section class="section related">
+      <div class="wrap">
+        <div class="head">
+          <div class="r">
+            <div class="mono">{d.relatedEyebrow}</div>
+            <h2>{d.relatedTitle1}<br>{d.relatedTitle2}</h2>
+          </div>
+          <p class="r" style="--d:.1s">{d.relatedCopy}</p>
+        </div>
+        <div class="cards">
+          {related.map((item, index) => (
+            <a
+              class="card r"
+              style={`--d:${index * 0.1}s`}
+              href={productHref(item.slug)}
+              data-cursor={t.cursor.view}
+            >
+              <div class="ph">
+                <span class="modelno">{item.model}</span>
+                {item.badge && <span class="badge">{item.badge}</span>}
+                <img src={item.image} alt={item.imageAlt} width="1254" height="1254" loading="lazy">
+              </div>
+              <div class="body">
+                <h3>{item.name}</h3>
+                <p class="card-summary">{item.summary}</p>
+                <div class="sp">
+                  {item.highlights.slice(0, 3).map((highlight) => (
+                    <span><b>{highlight.value}</b> {highlight.label.toLowerCase()}</span>
+                  ))}
+                </div>
+                <span class="card-link">{t.product.viewSpecs} <span aria-hidden="true">→</span></span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section">
+    <div class="wrap detail-grid">
+      <div class="sticky r">
+        <div class="mono">{d.faqEyebrow}</div>
+        <h2>{d.faqTitle1}<br>{d.faqTitle2}</h2>
+        <div class="detail-copy" style="margin-top:22px">
+          <p>{d.faqCopy}</p>
+          <p><a href="#inquiry" style="color:var(--acid)">{d.faqLink}</a></p>
+        </div>
+      </div>
+      <div class="r" style="--d:.1s">
+        <div class="faq-list">
+          {p.faqs.map((faq) => (
+            <details class="faq">
+              <summary>{faq.q}</summary>
+              <p>{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <InquirySection
+    lang={lang}
+    eyebrow={d.inquiryEyebrow}
+    title={fmt(d.inquiryTitle, { model: p.model })}
+    note={d.inquiryNote}
+    defaultModel={p.model}
+  />
+</BaseLayout>

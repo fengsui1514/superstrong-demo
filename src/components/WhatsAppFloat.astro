@@ -1,0 +1,25 @@
+---
+import { site } from '../data/site';
+import { ui } from '../i18n/ui';
+import { defaultLocale, fmt, type Locale } from '../i18n';
+
+type Props = { lang?: Locale };
+const { lang = defaultLocale } = Astro.props;
+
+const t = ui[lang].whatsapp;
+const digits = site.whatsapp.replace(/[^\d]/g, '');
+const prefilled = fmt(t.prefilled, { name: site.name });
+---
+{digits && (
+  <a
+    class="wa-float"
+    href={`https://wa.me/${digits}?text=${encodeURIComponent(prefilled)}`}
+    target="_blank"
+    rel="noopener"
+    aria-label={t.aria}
+  >
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.16c-.24.68-1.42 1.3-1.96 1.34-.54.05-1.05.24-3.53-.73-2.99-1.18-4.89-4.25-5.04-4.45-.15-.2-1.2-1.6-1.2-3.05 0-1.45.76-2.16 1.03-2.46.27-.3.59-.37.79-.37.2 0 .39 0 .57.01.18.01.42-.07.66.5.24.58.82 2.03.89 2.18.07.15.12.32.02.52-.1.2-.15.32-.3.49-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.3.76 1.25 1.62 2.03 1.11 1 2.05 1.31 2.34 1.46.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.19-.29.39-.24.65-.15.27.1 1.7.8 1.99.95.29.15.49.22.56.34.07.12.07.71-.17 1.39Z"></path>
+    </svg>
+  </a>
+)}

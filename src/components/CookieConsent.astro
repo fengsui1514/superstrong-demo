@@ -1,0 +1,21 @@
+---
+import { site } from '../data/site';
+import { ui } from '../i18n/ui';
+import { defaultLocale, localePath, type Locale } from '../i18n';
+
+type Props = { lang?: Locale };
+const { lang = defaultLocale } = Astro.props;
+
+const t = ui[lang].cookie;
+---
+{site.ga4Id && (
+  <div class="cookie" id="cookie-consent" data-ga-id={site.ga4Id} role="dialog" aria-label={t.label}>
+    <p>
+      {t.textBefore} <a href={localePath(lang, '/privacy/')}>{t.privacy}</a>{t.textAfter}
+    </p>
+    <div class="cookie-actions">
+      <button type="button" data-consent="decline">{t.decline}</button>
+      <button type="button" class="accept" data-consent="accept">{t.accept}</button>
+    </div>
+  </div>
+)}
