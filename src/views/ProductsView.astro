@@ -6,7 +6,7 @@ import { site } from '../data/site';
 import { categories, products, productFor, categoryFor } from '../data/products';
 import { catalog } from '../i18n/catalog';
 import { ui } from '../i18n/ui';
-import { defaultLocale, fmt, htmlLang, localePath, type Locale } from '../i18n';
+import { defaultLocale, fmt, htmlLang, localePath, assetPath, type Locale } from '../i18n';
 
 type Props = { lang?: Locale };
 const { lang = defaultLocale } = Astro.props;
@@ -103,7 +103,7 @@ const breadcrumbLd = {
                   <div class="ph">
                     <span class="modelno">{product.model}</span>
                     {product.badge && <span class="badge">{product.badge}</span>}
-                    <img src={product.image} alt={product.imageAlt} width="1254" height="1254" loading="lazy">
+                    <img src={assetPath(product.image)} alt={product.imageAlt} width="1254" height="1254" loading="lazy">
                   </div>
                   <div class="body">
                     <h3>{product.name}</h3>

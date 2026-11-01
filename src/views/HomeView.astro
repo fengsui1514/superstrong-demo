@@ -6,7 +6,7 @@ import { site } from '../data/site';
 import { products, productFor, specValue, type ResolvedProduct } from '../data/products';
 import { home } from '../i18n/home';
 import { ui } from '../i18n/ui';
-import { defaultLocale, fmt, htmlLang, localePath, type Locale } from '../i18n';
+import { defaultLocale, fmt, htmlLang, localePath, assetPath, type Locale } from '../i18n';
 
 type Props = { lang?: Locale };
 const { lang = defaultLocale } = Astro.props;
@@ -55,7 +55,7 @@ const itemListLd = {
   jsonLd={[itemListLd]}
 >
   <div class="preloader" id="preloader" aria-hidden="true">
-    <video src="/media/cs115.mp4" poster="/media/cs115-poster.jpg" muted loop playsinline preload="auto"></video>
+    <video src={assetPath('/media/cs115.mp4')} poster={assetPath('/media/cs115-poster.jpg')} muted loop playsinline preload="auto"></video>
     <div class="counter" id="counter"><b id="count">0</b><span>%</span></div>
     <button class="skip" id="skip" type="button">{h.preloaderSkip}</button>
   </div>
@@ -104,8 +104,8 @@ const itemListLd = {
             <video
               class:list={['portal-video', { 'is-on': index === 0 }]}
               data-key={product.slug}
-              src={product.video}
-              poster={product.poster}
+              src={product.video && assetPath(product.video)}
+              poster={product.poster && assetPath(product.poster)}
               muted
               loop
               playsinline
@@ -208,7 +208,7 @@ const itemListLd = {
               <div class="ph">
                 <span class="modelno">{product.model}</span>
                 {product.badge && <span class="badge">{product.badge}</span>}
-                <img src={product.image} alt={product.imageAlt} width="1254" height="1254" loading="lazy">
+                <img src={assetPath(product.image)} alt={product.imageAlt} width="1254" height="1254" loading="lazy">
               </div>
               <div class="body">
                 <h3>{product.name}</h3>

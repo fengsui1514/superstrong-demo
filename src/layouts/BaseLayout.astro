@@ -14,6 +14,7 @@ import {
   ogLocale,
   stripLocale,
   localePath,
+  assetPath,
   type Locale,
 } from '../i18n';
 
@@ -53,11 +54,11 @@ const siteDescription = lang === 'es' ? site.descriptionEs : site.description;
 const metaDescription = description ?? siteDescription;
 
 const base = Astro.site ?? new URL(site.url);
-const canonical = new URL(Astro.url.pathname, base).href;
-const ogImage = new URL(image, base).href;
+const basePath = stripLocale(lang, Astro.url.pathname);
+const canonical = new URL(localePath(lang, basePath), base).href;
+const ogImage = new URL(assetPath(image), base).href;
 const robots = noindex || site.demoMode ? 'noindex, nofollow' : 'index, follow';
 
-const basePath = stripLocale(lang, Astro.url.pathname);
 const alternates = [
   { hreflang: 'en', href: new URL(localePath('en', basePath), base).href },
   { hreflang: 'es', href: new URL(localePath('es', basePath), base).href },
@@ -67,11 +68,11 @@ const alternates = [
 const organizationLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  '@id': new URL('/#organization', base).href,
+  '@id': new URL(localePath('en', '/#organization'), base).href,
   name: site.legalName,
   alternateName: site.name,
-  url: new URL('/', base).href,
-  logo: new URL('/favicon.svg', base).href,
+  url: new URL(localePath('en', '/'), base).href,
+  logo: new URL(assetPath('/favicon.svg'), base).href,
   description: siteDescription,
   foundingDate: String(site.founded),
   address: {
@@ -93,9 +94,9 @@ const websiteLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: site.name,
-  url: new URL('/', base).href,
+  url: new URL(localePath('en', '/'), base).href,
   inLanguage: htmlLang[lang],
-  publisher: { '@id': new URL('/#organization', base).href },
+  publisher: { '@id': new URL(localePath('en', '/#organization'), base).href },
 };
 
 const blocks = [organizationLd, websiteLd, ...jsonLd];
@@ -112,8 +113,8 @@ const blocks = [organizationLd, websiteLd, ...jsonLd];
   <meta name="robots" content={robots}>
   <link rel="canonical" href={canonical}>
   {alternates.map((alt) => <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />)}
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  {preloadImage && <link rel="preload" as="image" href={preloadImage}>}
+  <link rel="icon" href={assetPath('/favicon.svg')} type="image/svg+xml">
+  {preloadImage && <link rel="preload" as="image" href={assetPath(preloadImage)}>}
 
   <meta property="og:site_name" content={site.name}>
   <meta property="og:type" content={ogType}>

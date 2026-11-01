@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { site } from '../data/site';
+import { assetPath } from '../i18n';
 
 export const GET: APIRoute = ({ site: astroSite }) => {
   const base = astroSite ?? new URL(site.url);
@@ -7,7 +8,7 @@ export const GET: APIRoute = ({ site: astroSite }) => {
     ? 'User-agent: *\nDisallow: /'
     : 'User-agent: *\nAllow: /';
 
-  const body = `${rules}\n\nSitemap: ${new URL('/sitemap.xml', base).href}\n`;
+  const body = `${rules}\n\nSitemap: ${new URL(assetPath('/sitemap.xml'), base).href}\n`;
 
   return new Response(body, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
